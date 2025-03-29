@@ -1,34 +1,14 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, Box } from '@mui/material';
 import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
-import { setupListeners } from '@reduxjs/toolkit/query';
 
 // Импорт компонентов страниц
 import Catalog from './pages/Catalog';
 import GameDetails from './pages/GameDetails';
 import Header from './components/Header';
 import Footer from './components/Footer';
-
-// Импорт API
-import { api } from './services/api';
-import { mockApi } from './services/mockApi';
-
-// Импорт темы
+import { store } from './services/store';
 import theme from './theme';
-
-// Настройка Redux store
-const store = configureStore({
-  reducer: {
-    [api.reducerPath]: api.reducer,
-    [mockApi.reducerPath]: mockApi.reducer,
-  },
-  middleware: getDefaultMiddleware =>
-    getDefaultMiddleware().concat(api.middleware).concat(mockApi.middleware),
-});
-
-// Настройка слушателей для RTK Query
-setupListeners(store.dispatch);
 
 function App() {
   return (

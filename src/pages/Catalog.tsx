@@ -2,7 +2,7 @@ import { FC, useState } from 'react';
 import { Container, Grid, Typography, Box, Skeleton, Pagination } from '@mui/material';
 import GameCard from '../components/GameCard';
 import GameFilters from '../components/GameFilters';
-import { useGetGamesQuery } from '../services/mockApi';
+import { useGetGamesQuery } from '../services/api';
 import { GameFilters as GameFiltersType } from '../types/game.types';
 
 const Catalog: FC = () => {
@@ -22,7 +22,7 @@ const Catalog: FC = () => {
   const gamesPerPage = 20;
 
   // Получение данных из API
-  const { data, isLoading, error } = useGetGamesQuery(filters);
+  const { data, isLoading, error } = useGetGamesQuery({ ...filters, page, limit: gamesPerPage });
 
   // Обработчик изменения фильтров
   const handleFilterChange = (newFilters: GameFiltersType) => {
@@ -40,11 +40,16 @@ const Catalog: FC = () => {
   const totalPages = data?.total ? Math.ceil(data.total / gamesPerPage) : 0;
 
   // Отображаемые игры на текущей странице
-  const displayedGames = data?.games?.slice((page - 1) * gamesPerPage, page * gamesPerPage) || [];
+  const displayedGames = data?.games || [];
 
   return (
     <Container maxWidth={false}>
-      <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4, fontWeight: 'bold' }}>
+      <Typography
+        variant="h4"
+        component="h1"
+        gutterBottom
+        sx={{ mb: 4, mt: 1, fontWeight: 'bold' }}
+      >
         Каталог игр
         {data?.total && (
           <Typography variant="subtitle1" component="span" sx={{ ml: 2, color: 'text.secondary' }}>
@@ -101,6 +106,7 @@ const Catalog: FC = () => {
                     display: 'flex',
                     justifyContent: 'center',
                     mt: 4,
+                    mb: 4
                   }}
                 >
                   <Pagination
