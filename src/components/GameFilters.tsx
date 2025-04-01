@@ -102,6 +102,7 @@ const GameFilters: FC<GameFiltersProps> = ({ filters, onFilterChange }) => {
     'Puzzle',
     'Horror',
     'Indie',
+    'Free To Play',
   ];
 
   return (

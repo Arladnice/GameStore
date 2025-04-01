@@ -9,6 +9,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import { store } from './services/store';
 import theme from './theme';
+import { appStyles } from './styles/app.styles';
 
 function App() {
   return (
@@ -16,15 +17,9 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <BrowserRouter>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: '100vh',
-            }}
-          >
+          <Box sx={appStyles.container}>
             <Header />
-            <Box sx={{ flexGrow: 1 }}>
+            <Box sx={appStyles.content}>
               <Routes>
                 <Route path="/" element={<Catalog />} />
                 <Route path="/catalog" element={<Catalog />} />

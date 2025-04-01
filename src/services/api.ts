@@ -38,7 +38,7 @@ export const api = createApi({
 
     // Получение игр с фильтрацией и пагинацией
     getGames: builder.query<
-      { games: GameCard[]; total: number },
+      { games: GameCard[]; total: number; filteredTotal: number },
       Partial<GameFilters> & { page?: number; limit?: number }
     >({
       async queryFn(arg, _queryApi, _extraOptions, fetchWithBQ) {
@@ -53,33 +53,13 @@ export const api = createApi({
           }
 
           const appList = appListResponse.data as SteamAppListResponse;
-
-          // Получаем все игры
           const allApps = appList.applist.apps;
 
-          // Фиксированное общее количество игр (это важно для корректной пагинации)
+          // Сохраняем общее количество игр без фильтров
           const totalGames = allApps.length;
 
-          // Фильтруем игры по поисковому запросу, если указан
-          let filteredApps = allApps;
-          if (arg.searchQuery) {
-            const query = arg.searchQuery.toLowerCase();
-            filteredApps = filteredApps.filter(app => app.name.toLowerCase().includes(query));
-          }
-
-          // Параметры пагинации
-          const page = arg.page || 1;
-          const limit = arg.limit || 20;
-
-          // Определяем диапазон игр для текущей страницы
-          const startIndex = (page - 1) * limit;
-          const endIndex = startIndex + limit;
-
-          // Получаем игры только для текущей страницы
-          const pageApps = filteredApps.slice(startIndex, endIndex);
-
-          // Получаем детали только для игр текущей страницы
-          const gameDetailsPromises = pageApps.map(async app => {
+          // Получаем детали для всех игр
+          const gameDetailsPromises = allApps.map(async app => {
             try {
               const detailsResponse = await fetchWithBQ(
                 `http://localhost:3001/api/appdetails?appids=${app.appid}`
@@ -92,12 +72,54 @@ export const api = createApi({
               const detailsData = detailsResponse.data as GameResponse;
               const appDetails = detailsData[app.appid];
 
-              // Если детали успешно получены, создаем карточку игры
               if (appDetails && appDetails.success) {
                 const gameData = appDetails.data;
 
-                // Проверяем, соответствует ли игра выбранным фильтрам
-                // Тут можно добавить логику применения остальных фильтров
+                // Проверяем соответствие фильтрам
+                if (arg.searchQuery) {
+                  const query = arg.searchQuery.toLowerCase();
+                  if (!gameData.name.toLowerCase().includes(query)) {
+                    return null;
+                  }
+                }
+
+                if (arg.priceRange) {
+                  const price = gameData.is_free ? 0 : gameData.price_overview?.final || 0;
+                  if (price < arg.priceRange[0] || price > arg.priceRange[1]) {
+                    return null;
+                  }
+                }
+
+                if (arg.genres && arg.genres.length > 0) {
+                  const gameGenres = gameData.genres.map(genre => genre.description);
+                  if (!arg.genres.some(genre => gameGenres.includes(genre))) {
+                    return null;
+                  }
+                }
+
+                if (arg.platforms && arg.platforms.length > 0) {
+                  const hasSelectedPlatform = arg.platforms.some(platform =>
+                    platform === 'windows'
+                      ? gameData.platforms.windows
+                      : platform === 'mac'
+                        ? gameData.platforms.mac
+                        : platform === 'linux'
+                          ? gameData.platforms.linux
+                          : false
+                  );
+                  if (!hasSelectedPlatform) {
+                    return null;
+                  }
+                }
+
+                if (arg.onlyDiscount) {
+                  if (
+                    !gameData.price_overview?.discount_percent ||
+                    gameData.price_overview.discount_percent === 0
+                  ) {
+                    return null;
+                  }
+                }
 
                 // Создаем объект карточки игры
                 const gameCard: GameCard = {
@@ -132,17 +154,19 @@ export const api = createApi({
           });
 
           const gameCardsResults = await Promise.all(gameDetailsPromises);
-          const gameCards = gameCardsResults.filter(card => card !== null) as GameCard[];
+          const filteredGameCards = gameCardsResults.filter(card => card !== null) as GameCard[];
 
-          // Убеждаемся, что у нас достаточно игр для отображения
-          // Если нет, можно было бы запросить еще
-          const finalGameCards = gameCards.slice(0, limit);
+          const page = arg.page || 1;
+          const limit = arg.limit || 12;
+          const startIndex = (page - 1) * limit;
+          const endIndex = startIndex + limit;
+          const paginatedGameCards = filteredGameCards.slice(startIndex, endIndex);
 
           return {
             data: {
-              games: finalGameCards,
-              // Используем фиксированное значение total для стабильной пагинации
-              total: totalGames,
+              games: paginatedGameCards,
+              total: totalGames, // Общее количество игр для отображения
+              filteredTotal: filteredGameCards.length, // Количество отфильтрованных игр для пагинации
             },
           };
         } catch (error) {

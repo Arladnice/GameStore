@@ -19,10 +19,11 @@ const Catalog: FC = () => {
   // Состояние фильтров
   const [filters, setFilters] = useState<GameFiltersType>(initialFilters);
   const [page, setPage] = useState(1);
-  const gamesPerPage = 20;
+  const gamesPerPage = 12;
 
   // Получение данных из API
   const { data, isLoading, error } = useGetGamesQuery({ ...filters, page, limit: gamesPerPage });
+  console.log(data);
 
   // Обработчик изменения фильтров
   const handleFilterChange = (newFilters: GameFiltersType) => {
@@ -37,7 +38,7 @@ const Catalog: FC = () => {
   };
 
   // Вычисление общего числа страниц
-  const totalPages = data?.total ? Math.ceil(data.total / gamesPerPage) : 0;
+  const totalPages = data?.filteredTotal ? Math.ceil(data.filteredTotal / gamesPerPage) : 0;
 
   // Отображаемые игры на текущей странице
   const displayedGames = data?.games || [];
@@ -106,7 +107,7 @@ const Catalog: FC = () => {
                     display: 'flex',
                     justifyContent: 'center',
                     mt: 4,
-                    mb: 4
+                    mb: 4,
                   }}
                 >
                   <Pagination
