@@ -7,8 +7,6 @@ import {
   Button,
   IconButton,
   Box,
-  TextField,
-  InputAdornment,
   Badge,
   Container,
   useTheme,
@@ -20,7 +18,6 @@ import {
   Divider,
 } from '@mui/material';
 import {
-  Search,
   ShoppingCart,
   Favorite,
   Menu as MenuIcon,
@@ -30,6 +27,7 @@ import {
   AccountCircle,
 } from '@mui/icons-material';
 import { useState } from 'react';
+import SearchBar from './SearchBar';
 
 const Header: FC = () => {
   const theme = useTheme();
@@ -98,19 +96,7 @@ const Header: FC = () => {
           {/* Поиск на десктопе */}
           {!isMobile && (
             <Box sx={{ flexGrow: 1, mx: 4, maxWidth: 600 }}>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Поиск"
-                variant="outlined"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search />
-                    </InputAdornment>
-                  ),
-                }}
-              />
+              <SearchBar />
             </Box>
           )}
 
@@ -176,20 +162,7 @@ const Header: FC = () => {
         <Divider />
 
         <Box sx={{ p: 2 }}>
-          <TextField
-            fullWidth
-            size="small"
-            placeholder="Поиск"
-            variant="outlined"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ mb: 2 }}
-          />
+          <SearchBar />
         </Box>
 
         <List>
