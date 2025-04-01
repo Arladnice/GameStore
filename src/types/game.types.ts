@@ -96,6 +96,7 @@ export interface GameCard {
     linux: boolean;
   };
   rating?: number;
+  screenshots?: Screenshot[];
 }
 
 // Параметры фильтрации для каталога

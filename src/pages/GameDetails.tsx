@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import { ShoppingCart, Computer, Apple, SportsEsports, Favorite, Send } from '@mui/icons-material';
 import { useGetGameDetailsQuery } from '../services/api';
+import ScreenshotSlider from '../components/ScreenshotSlider';
 
 // Стилизованный контейнер для видео
 const VideoContainer = styled(Box)(({ theme }) => ({
@@ -83,6 +84,10 @@ const GameDetails: FC = () => {
   // Состояние для табов
   const [tabValue, setTabValue] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Состояния для слайдера скриншотов
+  const [screenshotsOpen, setScreenshotsOpen] = useState(false);
+  const [screenshotIndex, setScreenshotIndex] = useState(0);
 
   // Обработчик изменения таба
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
@@ -264,7 +269,7 @@ const GameDetails: FC = () => {
                     Скриншоты
                   </Typography>
                   <Grid container spacing={1}>
-                    {gameData.screenshots?.slice(0, 6).map(screenshot => (
+                    {gameData.screenshots?.slice(0, 6).map((screenshot, index) => (
                       <Grid item xs={6} md={4} key={screenshot.id}>
                         <Box
                           component="img"
@@ -275,6 +280,16 @@ const GameDetails: FC = () => {
                             height: 150,
                             objectFit: 'cover',
                             borderRadius: 1,
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s',
+                            '&:hover': {
+                              transform: 'scale(1.05)',
+                              boxShadow: 3,
+                            },
+                          }}
+                          onClick={() => {
+                            setScreenshotIndex(index);
+                            setScreenshotsOpen(true);
                           }}
                         />
                       </Grid>
@@ -616,6 +631,17 @@ const GameDetails: FC = () => {
               </Box>
             </Box>
           </Container>
+
+          {/* Слайдер скриншотов */}
+          {gameData && gameData.screenshots && (
+            <ScreenshotSlider
+              open={screenshotsOpen}
+              onClose={() => setScreenshotsOpen(false)}
+              screenshots={gameData.screenshots.map(screenshot => screenshot.path_full)}
+              initialIndex={screenshotIndex}
+              gameName={gameData.name}
+            />
+          )}
         </>
       ) : (
         <Container maxWidth={false} sx={{ py: 4, textAlign: 'center' }}>

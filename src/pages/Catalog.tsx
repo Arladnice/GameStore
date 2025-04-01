@@ -29,7 +29,16 @@ const Catalog: FC = () => {
     data,
     isLoading: apiLoading,
     error: apiError,
-  } = useGetGamesQuery({ ...filters, page, limit: gamesPerPage });
+  } = useGetGamesQuery({
+    priceRange: filters.priceRange,
+    genres: filters.genres,
+    platforms: filters.platforms.length > 0 ? filters.platforms : undefined, // Ensure platforms are passed correctly
+    searchQuery: filters.searchQuery,
+    onlyDiscount: filters.onlyDiscount,
+    sortBy: filters.sortBy,
+    page,
+    limit: gamesPerPage,
+  });
 
   // Обновляем общее состояние при получении данных
   useEffect(() => {
