@@ -1,30 +1,21 @@
-import { FC, useState, useEffect, useRef } from 'react';
+// src/components/SearchBar.tsx
+import { FC, useState, useRef } from 'react';
 import { InputBase, Paper, IconButton, Box, ClickAwayListener } from '@mui/material';
 import { Search, Clear } from '@mui/icons-material';
-import { useGetGamesQuery } from '../services/api';
+import { useSelector } from 'react-redux';
+import { RootState } from '../services/store';
 import SearchResults from './SearchResults';
-import { GameCard } from '../types/game.types';
 
 const SearchBar: FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
-  const [searchResults, setSearchResults] = useState<GameCard[]>([]);
   const searchRef = useRef<HTMLDivElement>(null);
+  const { games } = useSelector((state: RootState) => state.games);
 
-  // Получаем данные о играх через API
-  const { data } = useGetGamesQuery({
-    searchQuery,
-    limit: 10, // Ограничиваем количество результатов
-  });
-
-  // Обновляем результаты поиска при изменении данных
-  useEffect(() => {
-    if (data && searchQuery.trim().length > 0) {
-      setSearchResults(data.games);
-    } else {
-      setSearchResults([]);
-    }
-  }, [data, searchQuery]);
+  // Фильтруем игры по поисковому запросу
+  const filteredGames = games.filter(game =>
+    game.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Обработчик изменения поискового запроса
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,7 +25,6 @@ const SearchBar: FC = () => {
   // Обработчик очистки поискового запроса
   const handleClearSearch = () => {
     setSearchQuery('');
-    setSearchResults([]);
   };
 
   // Обработчик потери фокуса
@@ -83,7 +73,7 @@ const SearchBar: FC = () => {
         {/* Результаты поиска */}
         {isSearchFocused && searchQuery.trim().length > 0 && (
           <SearchResults
-            results={searchResults}
+            results={filteredGames}
             query={searchQuery}
             onClose={() => setIsSearchFocused(false)}
           />

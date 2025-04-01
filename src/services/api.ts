@@ -156,6 +156,28 @@ export const api = createApi({
           const gameCardsResults = await Promise.all(gameDetailsPromises);
           const filteredGameCards = gameCardsResults.filter(card => card !== null) as GameCard[];
 
+          if (arg.sortBy) {
+            switch (arg.sortBy) {
+              case 'popular':
+                // Логика сортировки по популярности
+                break;
+              case 'price_asc':
+                filteredGameCards.sort((a, b) => (a.price.final || 0) - (b.price.final || 0));
+                break;
+              case 'price_desc':
+                filteredGameCards.sort((a, b) => (b.price.final || 0) - (a.price.final || 0));
+                break;
+              case 'name':
+                filteredGameCards.sort((a, b) => a.name.localeCompare(b.name));
+                break;
+              case 'release_date':
+                // Логика сортировки по дате выхода
+                break;
+              default:
+                break;
+            }
+          }
+
           const page = arg.page || 1;
           const limit = arg.limit || 12;
           const startIndex = (page - 1) * limit;

@@ -1,29 +1,50 @@
-import { FC, useState } from 'react';
+import { FC, useState, useEffect } from 'react';
 import { Container, Grid, Typography, Box, Skeleton, Pagination } from '@mui/material';
 import GameCard from '../components/GameCard';
 import GameFilters from '../components/GameFilters';
 import { useGetGamesQuery } from '../services/api';
 import { GameFilters as GameFiltersType } from '../types/game.types';
+import { setGames, setLoading, setError } from '../services/gamesSlice';
+import { RootState } from '../services/store';
+import { useDispatch, useSelector } from 'react-redux';
 
 const Catalog: FC = () => {
-  // Начальные значения фильтров
-  const initialFilters: GameFiltersType = {
+  const dispatch = useDispatch();
+  const { games, total, filteredTotal, isLoading, error } = useSelector(
+    (state: RootState) => state.games
+  );
+  const [filters, setFilters] = useState<GameFiltersType>({
     priceRange: [0, 7500],
     genres: [],
     platforms: [],
     searchQuery: '',
     onlyDiscount: false,
     sortBy: 'popular',
-  };
-
-  // Состояние фильтров
-  const [filters, setFilters] = useState<GameFiltersType>(initialFilters);
+  });
   const [page, setPage] = useState(1);
   const gamesPerPage = 12;
 
   // Получение данных из API
-  const { data, isLoading, error } = useGetGamesQuery({ ...filters, page, limit: gamesPerPage });
-  console.log(data);
+  const {
+    data,
+    isLoading: apiLoading,
+    error: apiError,
+  } = useGetGamesQuery({ ...filters, page, limit: gamesPerPage });
+
+  // Обновляем общее состояние при получении данных
+  useEffect(() => {
+    if (data) {
+      dispatch(setGames(data));
+    }
+    if (apiLoading) {
+      dispatch(setLoading(true));
+    } else {
+      dispatch(setLoading(false));
+    }
+    if (apiError) {
+      dispatch(setError(apiError.toString()));
+    }
+  }, [data, apiLoading, apiError, dispatch]);
 
   // Обработчик изменения фильтров
   const handleFilterChange = (newFilters: GameFiltersType) => {
@@ -38,10 +59,7 @@ const Catalog: FC = () => {
   };
 
   // Вычисление общего числа страниц
-  const totalPages = data?.filteredTotal ? Math.ceil(data.filteredTotal / gamesPerPage) : 0;
-
-  // Отображаемые игры на текущей странице
-  const displayedGames = data?.games || [];
+  const totalPages = filteredTotal ? Math.ceil(filteredTotal / gamesPerPage) : 0;
 
   return (
     <Container maxWidth={false}>
@@ -52,9 +70,9 @@ const Catalog: FC = () => {
         sx={{ mb: 4, mt: 1, fontWeight: 'bold' }}
       >
         Каталог игр
-        {data?.total && (
+        {total && (
           <Typography variant="subtitle1" component="span" sx={{ ml: 2, color: 'text.secondary' }}>
-            {data.total} игр
+            {total} игр
           </Typography>
         )}
       </Typography>
@@ -89,11 +107,11 @@ const Catalog: FC = () => {
                 Пожалуйста, попробуйте обновить страницу или попробуйте позже
               </Typography>
             </Box>
-          ) : displayedGames.length > 0 ? (
+          ) : games.length > 0 ? (
             // Карточки игр
             <>
               <Grid container spacing={2}>
-                {displayedGames.map(game => (
+                {games.map(game => (
                   <Grid item xs={12} sm={6} md={4} lg={3} key={game.appid}>
                     <GameCard game={game} />
                   </Grid>
