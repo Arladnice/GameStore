@@ -25,21 +25,21 @@ import ScreenshotSlider from '../components/ScreenshotSlider';
 
 // Стилизованный контейнер для видео
 const VideoContainer = styled(Box)(({ theme }) => ({
-  position: 'relative',
+  position: 'fixed', // Фиксированная позиция для полноэкранного режима
+  top: 0,
+  left: 0,
   width: '100%',
-  maxWidth: '1600px',
-  margin: '0 auto',
-  height: '70vh',
+  height: '100vh', // Полная высота экрана
   overflow: 'hidden',
-  marginBottom: '16px',
+  zIndex: 0, // Видео должно быть видимым, но под контентом
   '&::after': {
     content: '""',
     position: 'absolute',
     bottom: 0,
     left: 0,
     width: '100%',
-    height: '30%',
-    background: `linear-gradient(to top, ${theme.palette.background.default}, transparent)`,
+    height: '100%', // Градиент на всю высоту
+    background: `linear-gradient(to top, ${theme.palette.background.default} 20%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.5) 100%)`,
     pointerEvents: 'none',
     zIndex: 1,
   },
@@ -50,6 +50,21 @@ const VideoPlayer = styled('video')({
   width: '100%',
   height: '100%',
   objectFit: 'cover',
+  opacity: 0.8, // Увеличена непрозрачность для лучшей видимости
+  position: 'relative', // Добавлено позиционирование
+  zIndex: 0, // Добавлен z-index
+});
+
+// Контейнер для постера видео
+const VideoPoster = styled(Box)({
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  zIndex: 0,
 });
 
 // Компонент для табов с информацией
@@ -85,6 +100,10 @@ const GameDetails: FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Состояния для отслеживания загрузки видео
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
+  const [isVideoError, setIsVideoError] = useState(false);
+
   // Состояния для слайдера скриншотов
   const [screenshotsOpen, setScreenshotsOpen] = useState(false);
   const [screenshotIndex, setScreenshotIndex] = useState(0);
@@ -103,9 +122,24 @@ const GameDetails: FC = () => {
   // Автоматически воспроизводить видео при наличии трейлера
   useEffect(() => {
     if (trailer && videoRef.current) {
-      videoRef.current.play().catch(err => console.error('Ошибка автозапуска видео:', err));
+      // Сбрасываем состояния при изменении трейлера
+      setIsVideoLoading(true);
+      setIsVideoError(false);
+
+      // Предзагрузка постера
+      if ((gameData?.screenshots && gameData.screenshots.length > 0) || gameData?.header_image) {
+        const img = new Image();
+        img.src = gameData.screenshots?.[0]?.path_full || gameData.header_image;
+      }
+
+      // Воспроизведение видео с обработкой ошибок
+      videoRef.current.play().catch(err => {
+        console.error('Ошибка автозапуска видео:', err);
+        setIsVideoError(true);
+        setIsVideoLoading(false);
+      });
     }
-  }, [trailer]);
+  }, [trailer, gameData]);
 
   // Форматирование цены
   const formatPrice = (price: number) => {
@@ -205,30 +239,63 @@ const GameDetails: FC = () => {
       ) : gameData ? (
         <>
           {/* Видео-баннер или большой скриншот */}
-          <Box sx={{ width: '100%', position: 'relative' }}>
+          <Box sx={{ width: '100%', position: 'relative', minHeight: '100vh', pt: 4 }}>
             <VideoContainer>
               {trailer ? (
-                // Видео
-                <VideoPlayer ref={videoRef} controls autoPlay loop muted>
-                  <source src={trailer.mp4.max} type="video/mp4" />
-                  Ваш браузер не поддерживает видео.
-                </VideoPlayer>
+                // Видео с постером для предотвращения черного экрана
+                <>
+                  {isVideoLoading && (
+                    <VideoPoster
+                      sx={{
+                        backgroundImage: `url(${gameData.screenshots?.[0]?.path_full || gameData.header_image})`,
+                        opacity: 0.7,
+                      }}
+                    />
+                  )}
+                  <VideoPlayer
+                    ref={videoRef}
+                    controls
+                    autoPlay
+                    loop
+                    muted
+                    poster={gameData.screenshots?.[0]?.path_full || gameData.header_image}
+                    onLoadedData={() => setIsVideoLoading(false)}
+                    onError={() => {
+                      setIsVideoError(true);
+                      setIsVideoLoading(false);
+                      console.error('Ошибка загрузки видео');
+                    }}
+                  >
+                    {/* Предзагрузка видео в низком качестве */}
+                    {trailer.mp4['480'] && <source src={trailer.mp4['480']} type="video/mp4" />}
+                    <source src={trailer.mp4.max} type="video/mp4" />
+                    Ваш браузер не поддерживает видео.
+                  </VideoPlayer>
+                </>
               ) : (
                 // Если видео нет, показываем скриншот
-                <Box
+                <VideoPoster
                   sx={{
-                    height: '100%',
                     backgroundImage: `url(${gameData.screenshots?.[0]?.path_full || gameData.header_image})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
+                    opacity: 0.7,
                   }}
                 />
               )}
             </VideoContainer>
           </Box>
 
-          {/* Основная информация */}
-          <Container maxWidth={false} sx={{ py: 4, maxWidth: '1600px', mx: 'auto' }}>
+          {/* Основная информация - поверх видео */}
+          <Container
+            maxWidth={false}
+            sx={{
+              py: 4,
+              maxWidth: '1600px',
+              mx: 'auto',
+              position: 'relative',
+              zIndex: 2, // Увеличен z-index, чтобы контент был поверх видео
+              mt: '-100vh',
+            }}
+          >
             <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
               {gameData.name}
             </Typography>
