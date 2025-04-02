@@ -28,14 +28,6 @@ export const api = createApi({
       query: appId => `http://localhost:3001/api/appdetails?appids=${appId}`,
     }),
 
-    // Получение списка всех игр (с кэшированием)
-    getGamesList: builder.query<SteamAppListResponse, void>({
-      query: () => ({
-        url: 'http://localhost:3001/api/steamapps/getapplist/v2',
-        method: 'GET',
-      }),
-    }),
-
     // Получение игр с фильтрацией и пагинацией
     getGames: builder.query<
       { games: GameCard[]; total: number; filteredTotal: number },
@@ -54,9 +46,6 @@ export const api = createApi({
 
           const appList = appListResponse.data as SteamAppListResponse;
           const allApps = appList.applist.apps;
-
-          // Сохраняем общее количество игр без фильтров (ограничиваем до 500 для производительности)
-          const totalGames = Math.min(allApps.length, 500);
 
           // Берем для обработки не более 500 игр для повышения производительности
           const processableApps = allApps.slice(0, 500);
@@ -157,6 +146,9 @@ export const api = createApi({
           });
 
           const gameCardsResults = await Promise.all(gameDetailsPromises);
+
+          // Подсчитываем общее количество не null элементов для total
+          const validGamesCount = gameCardsResults.filter(card => card !== null).length;
           const filteredGameCards = gameCardsResults.filter(card => card !== null) as GameCard[];
 
           if (arg.sortBy) {
@@ -196,7 +188,7 @@ export const api = createApi({
           return {
             data: {
               games: paginatedGameCards,
-              total: totalGames, // Общее количество игр для отображения
+              total: validGamesCount, // Общее количество не null игр для отображения
               filteredTotal: filteredGameCards.length, // Количество отфильтрованных игр для пагинации
             },
           };
@@ -209,4 +201,4 @@ export const api = createApi({
   }),
 });
 
-export const { useGetGameDetailsQuery, useGetGamesQuery, useGetGamesListQuery } = api;
+export const { useGetGameDetailsQuery, useGetGamesQuery } = api;

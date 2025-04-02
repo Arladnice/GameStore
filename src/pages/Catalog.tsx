@@ -81,10 +81,12 @@ const Catalog: FC = () => {
         sx={{ mb: 4, mt: 1, fontWeight: 'bold' }}
       >
         Каталог игр
-        {total && (
+        {total ? (
           <Typography variant="subtitle1" component="span" sx={{ ml: 2, color: 'text.secondary' }}>
             {total} игр
           </Typography>
+        ) : (
+          ''
         )}
       </Typography>
 
