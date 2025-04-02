@@ -13,6 +13,8 @@ const Catalog: FC = () => {
   const { games, total, filteredTotal, isLoading, error } = useSelector(
     (state: RootState) => state.games
   );
+  console.log(total, games);
+
   const [filters, setFilters] = useState<GameFiltersType>({
     priceRange: [0, 7500],
     genres: [],

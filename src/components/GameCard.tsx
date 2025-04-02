@@ -16,7 +16,7 @@ const GameCard: FC<GameCardProps> = ({ game }) => {
 
   // Форматирование цены
   const formatPrice = (price: number) => {
-    return `${Math.floor(price / 100)} ₽`;
+    return `${price} ₽`;
   };
 
   // Обработчики для просмотра скриншотов

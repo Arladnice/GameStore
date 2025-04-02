@@ -55,11 +55,14 @@ export const api = createApi({
           const appList = appListResponse.data as SteamAppListResponse;
           const allApps = appList.applist.apps;
 
-          // Сохраняем общее количество игр без фильтров
-          const totalGames = allApps.length;
+          // Сохраняем общее количество игр без фильтров (ограничиваем до 500 для производительности)
+          const totalGames = Math.min(allApps.length, 500);
 
-          // Получаем детали для всех игр
-          const gameDetailsPromises = allApps.map(async app => {
+          // Берем для обработки не более 500 игр для повышения производительности
+          const processableApps = allApps.slice(0, 500);
+
+          // Получаем детали для игр
+          const gameDetailsPromises = processableApps.map(async app => {
             try {
               const detailsResponse = await fetchWithBQ(
                 `http://localhost:3001/api/appdetails?appids=${app.appid}`
@@ -159,7 +162,8 @@ export const api = createApi({
           if (arg.sortBy) {
             switch (arg.sortBy) {
               case 'popular':
-                // Логика сортировки по популярности
+                // Сортировка по популярности (по рейтингу)
+                filteredGameCards.sort((a, b) => (b.rating || 0) - (a.rating || 0));
                 break;
               case 'price_asc':
                 filteredGameCards.sort((a, b) => (a.price.final || 0) - (b.price.final || 0));
@@ -182,7 +186,12 @@ export const api = createApi({
           const limit = arg.limit || 12;
           const startIndex = (page - 1) * limit;
           const endIndex = startIndex + limit;
-          const paginatedGameCards = filteredGameCards.slice(startIndex, endIndex);
+
+          // Применяем пагинацию только если количество игр больше лимита
+          const paginatedGameCards =
+            limit < filteredGameCards.length
+              ? filteredGameCards.slice(startIndex, endIndex)
+              : filteredGameCards;
 
           return {
             data: {

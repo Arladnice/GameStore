@@ -19,14 +19,22 @@ import {
   useMediaQuery,
   Theme,
   SelectChangeEvent,
+  Button,
 } from '@mui/material';
-import { Search, ExpandMore, Computer, Apple, SportsEsports } from '@mui/icons-material';
+import {
+  Search,
+  ExpandMore,
+  Computer,
+  Apple,
+  SportsEsports,
+  FilterAltOff,
+} from '@mui/icons-material';
 import { GameFilters as GameFiltersType } from '../types/game.types';
 
 interface GameFiltersProps {
   filters: GameFiltersType;
   onFilterChange: (filters: GameFiltersType) => void;
-}
+}   
 
 const GameFilters: FC<GameFiltersProps> = ({ filters, onFilterChange }) => {
   const isMobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
@@ -88,6 +96,26 @@ const GameFilters: FC<GameFiltersProps> = ({ filters, onFilterChange }) => {
     });
   };
 
+  // Проверяем, есть ли активные фильтры
+  const hasActiveFilters =
+    filters.genres.length > 0 ||
+    filters.platforms.length > 0 ||
+    filters.searchQuery.trim() !== '' ||
+    filters.onlyDiscount ||
+    (filters.priceRange && (filters.priceRange[0] > 0 || filters.priceRange[1] < 7500));
+
+  // Сброс всех фильтров
+  const handleResetFilters = () => {
+    onFilterChange({
+      priceRange: [0, 7500],
+      genres: [],
+      platforms: [],
+      searchQuery: '',
+      onlyDiscount: false,
+      sortBy: 'popular',
+    });
+  };
+
   // Список жанров для фильтрации
   const genresList = [
     'Action',
@@ -140,6 +168,18 @@ const GameFilters: FC<GameFiltersProps> = ({ filters, onFilterChange }) => {
           <MenuItem value="release_date">По дате выхода</MenuItem>
         </Select>
       </FormControl>
+
+      {/* Кнопка сброса фильтров - показываем только если есть активные фильтры */}
+      {hasActiveFilters && (
+        <Button
+          variant="outlined"
+          onClick={handleResetFilters}
+          startIcon={<FilterAltOff />}
+          sx={{ mb: 2, width: '100%' }}
+        >
+          Сбросить все фильтры
+        </Button>
+      )}
 
       {/* Фильтры в аккордеоне для мобильных устройств */}
       <Accordion
