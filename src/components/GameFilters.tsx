@@ -34,7 +34,7 @@ import { GameFilters as GameFiltersType } from '../types/game.types';
 interface GameFiltersProps {
   filters: GameFiltersType;
   onFilterChange: (filters: GameFiltersType) => void;
-}   
+}
 
 const GameFilters: FC<GameFiltersProps> = ({ filters, onFilterChange }) => {
   const isMobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
@@ -134,7 +134,15 @@ const GameFilters: FC<GameFiltersProps> = ({ filters, onFilterChange }) => {
   ];
 
   return (
-    <Box sx={{ mb: 3 }}>
+    <Box
+      sx={{
+        mb: 3,
+        // Предотвращаем смещение контента при открытии селектора
+        position: 'relative',
+        overflow: 'visible',
+        width: '100%',
+      }}
+    >
       {/* Поисковая строка */}
       <TextField
         fullWidth
@@ -160,6 +168,20 @@ const GameFilters: FC<GameFiltersProps> = ({ filters, onFilterChange }) => {
           value={filters.sortBy}
           label="Сортировка"
           onChange={handleSortChange}
+          // Предотвращаем смещение контента и исчезновение скролла
+          MenuProps={{
+            // Отключаем блокировку скролла при открытии меню
+            disableScrollLock: true,
+            // Устанавливаем правильное позиционирование для меню
+            PaperProps: {
+              sx: {
+                // Предотвращаем смещение контента
+                position: 'absolute',
+                // Обеспечиваем правильное отображение меню
+                zIndex: 1300,
+              },
+            },
+          }}
         >
           <MenuItem value="popular">Популярные</MenuItem>
           <MenuItem value="price_asc">Цена: по возрастанию</MenuItem>
@@ -190,6 +212,10 @@ const GameFilters: FC<GameFiltersProps> = ({ filters, onFilterChange }) => {
           '&:before': {
             display: 'none',
           },
+          // Предотвращаем смещение аккордеона при открытии селектора
+          position: 'relative',
+          overflow: 'visible',
+          width: '100%',
         }}
       >
         <AccordionSummary expandIcon={<ExpandMore />}>
